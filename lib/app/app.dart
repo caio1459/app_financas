@@ -1,4 +1,5 @@
 import 'package:app_financas/ui/pages/home_page.dart';
+import 'package:app_financas/ui/themes/theme.dart';
 import 'package:flutter/material.dart';
 
 class AppFinacas extends StatelessWidget {
@@ -6,10 +7,11 @@ class AppFinacas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'App Controle de Finanças',
       debugShowCheckedModeBanner: false,
-      home: HomePage(),
+      home: const HomePage(),
+      theme: themeData(),
     );
   }
 }

@@ -1,50 +1,90 @@
+import 'dart:math';
+
 import 'package:app_financas/models/transaction.dart';
-import 'package:app_financas/ui/widgets/info_colums.dart';
-import 'package:app_financas/ui/widgets/price_container.dart';
+import 'package:app_financas/moock/transaction_bloc.dart';
+import 'package:app_financas/ui/widgets/chart.dart';
+import 'package:app_financas/ui/widgets/transaction_form.dart';
+import 'package:app_financas/ui/widgets/transaction_list.dart';
 import 'package:flutter/material.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<Transaction> transactions = [
-      Transaction(id: 1, title: 'Cinema', value: 12.50, date: DateTime.now()),
-      Transaction(id: 2, title: 'Gasolina', value: 20, date: DateTime.now())
-    ];
+  State<HomePage> createState() => _HomePageState();
+}
 
-    return Placeholder(
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text("Despesas Pessoais"),
-          backgroundColor: Colors.green.shade300,
-        ),
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+class _HomePageState extends State<HomePage> {
+  final transactionBloc = TransactionMoock();
+  late List<Transaction> _transactions;
+
+  @override
+  void initState() {
+    super.initState();
+    _transactions = transactionBloc.mock;
+  }
+
+  List<Transaction> get _recentTransactions {
+    return _transactions
+        .where((t) =>
+            t.date.isAfter(DateTime.now().subtract(const Duration(days: 7))))
+        .toList();
+  }
+
+  void _addTransaction(String title, double value, DateTime date) {
+    final newTransaction = Transaction(
+      id: Random().nextInt(100),
+      title: title,
+      value: value,
+      date: date,
+    );
+    setState(() {
+      _transactions.add(newTransaction);
+    });
+    Navigator.pop(context);
+  }
+
+  void _deleteTransaction(int id) {
+    setState(() {
+      _transactions.removeWhere((t) => t.id == id);
+    });
+  }
+
+  void _openModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
+        return TransactionForm(addTransaction: _addTransaction);
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Despesas Pessoais"),
+        actions: [
+          IconButton(
+            onPressed: () => _openModal(context),
+            icon: const Icon(Icons.add),
+          )
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _openModal(context),
+        child: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      body: SingleChildScrollView(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              height: 50,
-              child: const Card(
-                elevation: 5,
-                color: Colors.lightBlue,
-                child: Text("Grafico"),
-              ),
+            Chart(recentTransactions: _recentTransactions),
+            TransactionList(
+              transactions: _transactions,
+              deleteTransaction: _deleteTransaction,
             ),
-            Column(
-              children: [
-                ...transactions.map((t) {
-                  return Card(
-                    child: Row(
-                      children: [
-                        PriceContainer(price: t.value),
-                        InfoColums(title: t.title, date: t.date)
-                      ],
-                    ),
-                  );
-                }),
-              ],
-            )
           ],
         ),
       ),
